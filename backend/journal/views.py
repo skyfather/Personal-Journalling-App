@@ -13,7 +13,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class JournalViewSet(viewsets.ModelViewSet):
     queryset = Journal.objects.all()
     serializer_class = JournalSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
 
 
 
