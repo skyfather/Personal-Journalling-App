@@ -78,10 +78,50 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
 
         # check if the authenticated user is the same as the instance user accessed via the pk in the url
-        if user != instance:
+        if user.pk != instance.pk:
             raise serializers.ValidationError({"Error":"Updating other users passwords not allowed"})
+        
         instance.set_password(validated_data['password'])
         instance.save()
 
         return instance
 
+class UpdateUserSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=True)
+
+    class Meta:
+        model = User
+        fields = ('username','email','first_name','last_name')
+        extra_kwargs = {
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+        }
+
+    def validate_email(self, value):
+        user = self.context['request'].user
+        if User.objects.exclude(pk=user.pk).filter(email=value).exists():
+            raise serializers.ValidationError({"email": "This email is already in use"})
+        
+        return value
+    
+    def validate_username(self, value):
+        user = self.context['request'].user
+        if User.objects.exclude(pk=user.pk).filter(username=value).exists():
+            raise serializers.ValidationError({"username": "This username is already in use"})
+        
+        return value
+
+    def update(self, instance, validated_data):
+        user = self.context['request'].user
+        # check if the authenticated user is the same as the instance user accessed before updating
+        if user.pk != instance.pk:
+            raise serializers.ValidationError({"Authorize":"You don't have permission to update another user"})
+        
+        instance.username = validated_data['username']
+        instance.email = validated_data['email']
+        instance.fist_name = validated_data['first_name']
+        instance.last_name = validated_data['last_name']
+
+        instance.save()
+
+        return instance
